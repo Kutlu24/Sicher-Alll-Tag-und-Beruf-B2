@@ -6,30 +6,31 @@
   <title>Sicher! B2 Vokabeltrainer</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
   <div class="container">
+
+    <!-- ── HAUPTMENÜ ── -->
     <div id="main-menu">
       <header class="hero">
         <h1>Sicher! B2 Vokabeltrainer</h1>
         <p class="subtitle">Wähle deinen Lernmodus</p>
       </header>
-
       <div class="modules">
+
         <!-- Modul 1 -->
-        <div class="module-card" onclick="openTrainer(1)" role="button" tabindex="0"
+        <div class="module-card" id="m1-card" onclick="openTrainer(1)" role="button" tabindex="0"
              onkeydown="if(event.key==='Enter'||event.key===' '){openTrainer(1)}">
           <span class="badge">Mit Audio</span>
           <div class="module-icon">🔊</div>
           <h2 class="module-title">Modul 1</h2>
-          <p class="module-subtitle">Sicher! B2 - Hörtraining</p>
+          <p class="module-subtitle">Sicher! B2 – Hörtraining</p>
           <div class="module-stats">
             <div class="stat" id="m1-words-display">Lade Daten...</div>
           </div>
           <div class="module-features">
-            <div class="feature"><span>📝</span> <span>Beispielsätze & Audio</span></div>
-            <div class="feature"><span>🎧</span> <span>Aussprache-Training</span></div>
-            <div class="feature"><span>🗂</span> <span>4 Kapitel</span></div>
+            <div class="feature"><span>📝</span><span>Beispielsätze & Audio</span></div>
+            <div class="feature"><span>🎧</span><span>Aussprache-Training</span></div>
+            <div class="feature"><span>🗂</span><span id="m1-kapitel-info">Kapitel werden geladen...</span></div>
           </div>
           <button class="module-btn" id="m1-btn" disabled>Lade...</button>
         </div>
@@ -40,46 +41,204 @@
           <span class="badge badge-blue">6 Sprachen</span>
           <div class="module-icon">🌍</div>
           <h2 class="module-title">Modul 2</h2>
-          <p class="module-subtitle">Sicher! B2 - Multilingual</p>
+          <p class="module-subtitle">Sicher! B2 – Multilingual</p>
           <div class="module-stats">
             <div class="stat" id="m2-words-display">Lade Daten...</div>
           </div>
           <div class="module-features">
-            <div class="feature"><span>🌐</span> <span>TR, EN, UK, AR, FA, KU</span></div>
-            <div class="feature"><span>🎯</span> <span>Quiz & Flashcards</span></div>
-            <div class="feature"><span>📊</span> <span>Echtzeit Statistik</span></div>
+            <div class="feature"><span>🌐</span><span>TR, EN, UK, AR, FA, KU</span></div>
+            <div class="feature"><span>🎯</span><span>Quiz & Flashcards</span></div>
+            <div class="feature"><span>📊</span><span>Echtzeit Statistik</span></div>
           </div>
           <button class="module-btn" id="m2-btn" disabled>Lade...</button>
         </div>
-      </div>
 
+      </div>
       <p class="footnote" id="load-hint"></p>
     </div>
 
-    <!-- TRAINER -->
-    <div id="trainer-area" class="hidden">
+    <!-- ── MODUL 1 TRAINER ── -->
+    <div id="m1-trainer" class="hidden">
+      <div class="m1-wrapper">
+
+        <div class="m1-header">
+          <button class="nav-btn" onclick="showMenu()">← Menü</button>
+          <h2 class="m1-title">🇩🇪 Deutsch Vokabeltrainer</h2>
+          <div></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="m1-stats-grid">
+          <div class="m1-stat-card">
+            <div class="m1-stat-icon">📚</div>
+            <div class="m1-stat-label">Gesamt</div>
+            <div class="m1-stat-value" id="m1-total">0</div>
+          </div>
+          <div class="m1-stat-card">
+            <div class="m1-stat-icon">✅</div>
+            <div class="m1-stat-label">Gelernt</div>
+            <div class="m1-stat-value" id="m1-learned">0</div>
+          </div>
+          <div class="m1-stat-card">
+            <div class="m1-stat-icon">🎯</div>
+            <div class="m1-stat-label">Übrig</div>
+            <div class="m1-stat-value" id="m1-remaining">0</div>
+          </div>
+          <div class="m1-stat-card">
+            <div class="m1-stat-icon">⭐</div>
+            <div class="m1-stat-label">Favoriten</div>
+            <div class="m1-stat-value" id="m1-favcount">0</div>
+          </div>
+        </div>
+
+        <!-- Tages-Ziel -->
+        <div class="m1-goal-bar">
+          <div class="m1-goal-text">
+            🎯 Tägliches Ziel: <strong>10 Wörter</strong>
+            &nbsp;&nbsp; Heute gelernt: <strong><span id="m1-today">0</span> / 10</strong>
+          </div>
+          <div class="m1-progress-track">
+            <div class="m1-progress-fill" id="m1-progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="m1-card-area">
+          <div class="m1-tabs">
+            <button class="m1-tab active" id="tab-flash" onclick="setM1Mode('flash')">🃏 Lernkarten</button>
+            <button class="m1-tab" id="tab-quiz" onclick="setM1Mode('quiz')">🎯 Multiple Choice</button>
+            <button class="m1-tab" id="tab-write" onclick="setM1Mode('write')">✏️ Schreib-Quiz</button>
+            <button class="m1-tab" id="tab-review" onclick="setM1Mode('review')">🔄 Wiederholung</button>
+          </div>
+
+          <div class="m1-filters">
+            <label class="m1-filter-item">
+              <span>Lektion</span>
+              <select id="m1-unit-select" onchange="m1InitSession()">
+                <option value="all">Alle</option>
+              </select>
+            </label>
+            <label class="m1-filter-item">
+              <span>Teil</span>
+              <select id="m1-part-select" onchange="m1InitSession()">
+                <option value="all">Alle</option>
+              </select>
+            </label>
+            <label class="m1-filter-item">
+              <span>Suchen</span>
+              <input type="text" id="m1-search" placeholder="Wort suchen..." oninput="m1InitSession()">
+            </label>
+            <label class="m1-filter-item">
+              <span>Filter</span>
+              <select id="m1-filter-select" onchange="m1InitSession()">
+                <option value="all">Alle Wörter</option>
+                <option value="unlearned">Nicht gelernt</option>
+                <option value="learned">Gelernt</option>
+                <option value="fav">Favoriten</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="m1-actions">
+            <button class="m1-action-btn" onclick="m1Shuffle()">🔀 Mischen</button>
+            <button class="m1-action-btn" onclick="alert('Gelernt: '+m1LearnedSet.size+' / '+m1Vocab.length)">📊 Statistiken</button>
+            <button class="m1-action-btn" onclick="showMenu()">🏠 Home</button>
+            <button class="m1-action-btn danger" onclick="m1Reset()">🔄 Zurücksetzen</button>
+          </div>
+        </div>
+
+        <!-- FLASHCARD -->
+        <div id="m1-flash-area">
+          <div class="m1-flashcard" id="m1-flashcard" onclick="m1Flip()">
+            <button class="fav-btn" id="fav-btn" onclick="event.stopPropagation(); m1ToggleFav()">☆</button>
+            <div class="m1-card-inner" id="m1-card-inner">
+              <div class="m1-card-front">
+                <div class="m1-word" id="m1-word">Wort</div>
+                <div class="m1-grammar" id="m1-grammar"></div>
+                <div class="m1-kapitel-badges" id="m1-kbadge"></div>
+                <button class="m1-listen-btn" onclick="event.stopPropagation(); m1PlayAudio()">🔊 Anhören</button>
+                <div class="m1-flip-hint">🖐 Klicken zum Umdrehen</div>
+              </div>
+              <div class="m1-card-back">
+                <div class="m1-sentence" id="m1-sentence-back">Beispielsatz</div>
+                <button class="m1-listen-btn" onclick="event.stopPropagation(); m1PlayAudio()">🔊 Nochmal hören</button>
+              </div>
+            </div>
+          </div>
+          <audio id="m1-audio"></audio>
+
+          <div class="m1-nav-row">
+            <button class="m1-nav-btn back" onclick="m1Prev()">← Zurück</button>
+            <button class="m1-nav-btn learned" onclick="m1MarkLearned()">✅ Gelernt</button>
+            <button class="m1-nav-btn next" onclick="m1Next()">Weiter →</button>
+          </div>
+        </div>
+
+        <!-- MULTIPLE CHOICE -->
+        <div id="m1-quiz-area" class="hidden">
+          <div class="m1-quiz-box">
+            <div class="m1-quiz-top">
+              <span class="chip">Frage</span>
+              <span class="chip chip-muted" id="m1-quiz-meta"></span>
+            </div>
+            <div class="m1-quiz-q" id="m1-quiz-q"></div>
+          </div>
+          <div class="m1-quiz-options" id="m1-quiz-opts"></div>
+          <div class="m1-nav-row">
+            <button class="m1-nav-btn back" onclick="m1Prev()">← Zurück</button>
+            <button class="m1-nav-btn next" onclick="m1Next()">Weiter →</button>
+          </div>
+        </div>
+
+        <!-- SCHREIB-QUIZ -->
+        <div id="m1-write-area" class="hidden">
+          <div class="m1-quiz-box">
+            <div class="m1-quiz-top">
+              <span class="chip">Schreib-Quiz</span>
+              <span class="chip chip-muted" id="m1-write-meta"></span>
+            </div>
+            <div class="m1-quiz-q" id="m1-write-q"></div>
+          </div>
+          <div class="m1-write-input-row">
+            <input type="text" id="m1-write-input" class="m1-write-input" placeholder="Antwort eingeben..." onkeydown="if(event.key==='Enter')m1CheckWrite()">
+            <button class="m1-nav-btn learned" onclick="m1CheckWrite()">✅ Prüfen</button>
+          </div>
+          <div id="m1-write-result" class="m1-write-result hidden"></div>
+          <div class="m1-nav-row" style="margin-top:12px">
+            <button class="m1-nav-btn back" onclick="m1Prev()">← Zurück</button>
+            <button class="m1-nav-btn next" onclick="m1Next()">Weiter →</button>
+          </div>
+        </div>
+
+        <!-- WIEDERHOLUNG -->
+        <div id="m1-review-area" class="hidden">
+          <div id="m1-review-content"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── MODUL 2 TRAINER ── -->
+    <div id="m2-trainer" class="hidden">
       <div class="trainer-card">
         <div class="trainer-header">
           <button class="nav-btn" onclick="showMenu()">← Menü</button>
-          <div class="stats" id="stats-display">
+          <div class="stats">
             <span class="stat-pill correct">✅ <span id="correct-count">0</span></span>
             <span class="stat-pill wrong">❌ <span id="wrong-count">0</span></span>
             <span class="stat-pill progress">📊 <span id="progress-percent">0%</span></span>
           </div>
         </div>
-
-        <div class="controls-row" id="controls-row">
+        <div class="controls-row">
           <label class="select-wrap">
-            <span class="label" id="unit-label">Lektion</span>
-            <select id="unit-select" onchange="initSession()">
-              <option value="all">Alle</option>
+            <span class="label">Lektion</span>
+            <select id="unit-select" onchange="m2InitSession()">
+              <option value="all">Alle Lektionen</option>
             </select>
           </label>
-
-          <!-- Nur Modul 2: Sprachauswahl -->
-          <label class="select-wrap" id="lang-wrap">
+          <label class="select-wrap">
             <span class="label">Sprache</span>
-            <select id="lang-select" onchange="initSession()">
+            <select id="lang-select" onchange="m2InitSession()">
               <option value="Turkisch">Türkçe</option>
               <option value="Englisch">English</option>
               <option value="Ukrainisch (Українська)">Українська</option>
@@ -89,29 +248,19 @@
             </select>
           </label>
         </div>
-
-        <!-- Flashcard -->
         <div id="flashcard-container" class="card" onclick="flipCard()">
           <div class="card-inner">
             <div class="card-front">
               <h2 id="de-word">Wort</h2>
-              <p id="de-grammar" class="grammar-hint"></p>
               <p class="tap-hint">Tippen zum Umdrehen</p>
             </div>
             <div class="card-back">
               <h2 id="target-word">Translation</h2>
               <div class="divider"></div>
               <p id="b2-sentence">Beispielsatz...</p>
-              <!-- Audio nur Modul 1 -->
-              <div id="audio-area" class="hidden">
-                <button class="audio-btn" onclick="event.stopPropagation(); playAudio()">🔊 Anhören</button>
-                <audio id="audio-player"></audio>
-              </div>
             </div>
           </div>
         </div>
-
-        <!-- Quiz -->
         <div id="quiz-container" class="hidden">
           <div class="quiz-q-box">
             <div class="quiz-top">
@@ -122,15 +271,14 @@
           </div>
           <div id="quiz-options"></div>
         </div>
-
         <div class="footer-actions">
           <button id="toggle-mode-btn" class="action-btn mode" onclick="toggleMode()">🎯 Quiz Modus</button>
-          <button class="action-btn next" onclick="nextWord()">Nächste Vokabel →</button>
+          <button class="action-btn next" onclick="m2NextWord()">Nächste Vokabel →</button>
         </div>
       </div>
     </div>
-  </div>
 
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="script.js"></script>
   <noscript>Bitte JavaScript aktivieren.</noscript>
