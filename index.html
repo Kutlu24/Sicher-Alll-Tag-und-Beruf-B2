@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sicher! B2 Vokabeltrainer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div id="main-menu">
+      <header class="hero">
+        <h1>Sicher! B2 Vokabeltrainer</h1>
+        <p class="subtitle">Wähle deinen Lernmodus</p>
+      </header>
+
+      <div class="modules">
+        <!-- Modul 1 -->
+        <div class="module-card" onclick="openTrainer(1)" role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter'||event.key===' '){openTrainer(1)}">
+          <span class="badge">Mit Audio</span>
+          <div class="module-icon">🔊</div>
+          <h2 class="module-title">Modul 1</h2>
+          <p class="module-subtitle">Sicher! B2 - Hörtraining</p>
+          <div class="module-stats">
+            <div class="stat" id="m1-words-display">Lade Daten...</div>
+          </div>
+          <div class="module-features">
+            <div class="feature"><span>📝</span> <span>Beispielsätze & Audio</span></div>
+            <div class="feature"><span>🎧</span> <span>Aussprache-Training</span></div>
+            <div class="feature"><span>🗂</span> <span>4 Kapitel</span></div>
+          </div>
+          <button class="module-btn" id="m1-btn" disabled>Lade...</button>
+        </div>
+
+        <!-- Modul 2 -->
+        <div class="module-card" onclick="openTrainer(2)" role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter'||event.key===' '){openTrainer(2)}">
+          <span class="badge badge-blue">6 Sprachen</span>
+          <div class="module-icon">🌍</div>
+          <h2 class="module-title">Modul 2</h2>
+          <p class="module-subtitle">Sicher! B2 - Multilingual</p>
+          <div class="module-stats">
+            <div class="stat" id="m2-words-display">Lade Daten...</div>
+          </div>
+          <div class="module-features">
+            <div class="feature"><span>🌐</span> <span>TR, EN, UK, AR, FA, KU</span></div>
+            <div class="feature"><span>🎯</span> <span>Quiz & Flashcards</span></div>
+            <div class="feature"><span>📊</span> <span>Echtzeit Statistik</span></div>
+          </div>
+          <button class="module-btn" id="m2-btn" disabled>Lade...</button>
+        </div>
+      </div>
+
+      <p class="footnote" id="load-hint"></p>
+    </div>
+
+    <!-- TRAINER -->
+    <div id="trainer-area" class="hidden">
+      <div class="trainer-card">
+        <div class="trainer-header">
+          <button class="nav-btn" onclick="showMenu()">← Menü</button>
+          <div class="stats" id="stats-display">
+            <span class="stat-pill correct">✅ <span id="correct-count">0</span></span>
+            <span class="stat-pill wrong">❌ <span id="wrong-count">0</span></span>
+            <span class="stat-pill progress">📊 <span id="progress-percent">0%</span></span>
+          </div>
+        </div>
+
+        <div class="controls-row" id="controls-row">
+          <label class="select-wrap">
+            <span class="label" id="unit-label">Lektion</span>
+            <select id="unit-select" onchange="initSession()">
+              <option value="all">Alle</option>
+            </select>
+          </label>
+
+          <!-- Nur Modul 2: Sprachauswahl -->
+          <label class="select-wrap" id="lang-wrap">
+            <span class="label">Sprache</span>
+            <select id="lang-select" onchange="initSession()">
+              <option value="Turkisch">Türkçe</option>
+              <option value="Englisch">English</option>
+              <option value="Ukrainisch (Українська)">Українська</option>
+              <option value="Arabisch (العربية)">العربية</option>
+              <option value="Farsi (فارسی)">فارسی</option>
+              <option value="Kurdisch (Kurmancî)">Kurmancî</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Flashcard -->
+        <div id="flashcard-container" class="card" onclick="flipCard()">
+          <div class="card-inner">
+            <div class="card-front">
+              <h2 id="de-word">Wort</h2>
+              <p id="de-grammar" class="grammar-hint"></p>
+              <p class="tap-hint">Tippen zum Umdrehen</p>
+            </div>
+            <div class="card-back">
+              <h2 id="target-word">Translation</h2>
+              <div class="divider"></div>
+              <p id="b2-sentence">Beispielsatz...</p>
+              <!-- Audio nur Modul 1 -->
+              <div id="audio-area" class="hidden">
+                <button class="audio-btn" onclick="event.stopPropagation(); playAudio()">🔊 Anhören</button>
+                <audio id="audio-player"></audio>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz -->
+        <div id="quiz-container" class="hidden">
+          <div class="quiz-q-box">
+            <div class="quiz-top">
+              <span class="chip">Frage</span>
+              <span class="chip chip-muted" id="quiz-meta"></span>
+            </div>
+            <h2 id="quiz-question">Frage?</h2>
+          </div>
+          <div id="quiz-options"></div>
+        </div>
+
+        <div class="footer-actions">
+          <button id="toggle-mode-btn" class="action-btn mode" onclick="toggleMode()">🎯 Quiz Modus</button>
+          <button class="action-btn next" onclick="nextWord()">Nächste Vokabel →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="script.js"></script>
+  <noscript>Bitte JavaScript aktivieren.</noscript>
+</body>
+</html>
