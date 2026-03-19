@@ -134,7 +134,6 @@ function buildM1Menu() {
   if (su) {
     su.innerHTML = `<option value="all">Alle</option>`;
     ks.forEach(k => { const o=document.createElement("option"); o.value=String(k); o.innerText="Kapitel "+k; su.appendChild(o); });
-    su.onchange = () => { buildTeilMenu(); initSession(); };
   }
   buildTeilMenu();
 }
