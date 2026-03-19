@@ -11,6 +11,7 @@ const K_WORT  = "Wort";
 const K_GRAMM = "Grammatik\n(Artikel/Konjugation)";
 const K_SENT  = "Beispiel Satz";
 const K_KAPI  = "Kapitel";
+const K_TEIL  = "Teil";
 const K_AUDIO = "ses_dosyasi";
 const K_AUDIO2= "Audio Datei";
 const K_KARTE = "Veröffentlichungsdatum \n(Karte)";
@@ -129,21 +130,23 @@ function normM2(row) {
 function buildM1Menu() {
   const ks = [...new Set(m1Vocab.map(r=>r[K_KAPI]).filter(Boolean))].sort((a,b)=>a-b);
 
-  // Lektion (Kapitel) menüsü
   const su = document.getElementById("f-unit");
   if (su) {
     su.innerHTML = `<option value="all">Alle</option>`;
     ks.forEach(k => { const o=document.createElement("option"); o.value=String(k); o.innerText="Kapitel "+k; su.appendChild(o); });
+    su.onchange = () => { buildTeilMenu(); initSession(); };
   }
+  buildTeilMenu();
+}
 
-  // Teil menüsü: JSON'da ayrı "Teil" alanı yok,
-  // Kapitel içindeki sıra numarası (1-55 arası) kullanılamaz.
-  // Bu yüzden Teil = Kapitel ile eşleşiyor, aynı seçenekleri göster.
+function buildTeilMenu() {
   const sp = document.getElementById("f-part");
-  if (sp) {
-    sp.innerHTML = `<option value="all">Alle</option>`;
-    ks.forEach(k => { const o=document.createElement("option"); o.value=String(k); o.innerText="Teil "+k; sp.appendChild(o); });
-  }
+  if (!sp) return;
+  const unit = val("f-unit");
+  const filtered = unit === "all" ? m1Vocab : m1Vocab.filter(r => String(r[K_KAPI]) === unit);
+  const teile = [...new Set(filtered.map(r=>r[K_TEIL]).filter(Boolean))].sort((a,b)=>a-b);
+  sp.innerHTML = `<option value="all">Alle</option>`;
+  teile.forEach(t => { const o=document.createElement("option"); o.value=String(t); o.innerText="Teil "+t; sp.appendChild(o); });
 }
 
 function buildM2Menu() {
@@ -189,8 +192,9 @@ function initSession() {
 
   let list = m1Vocab.filter(r => {
     const k = String(r[K_KAPI]);
+    const t = String(r[K_TEIL]);
     if (unit !== "all" && k !== unit) return false;
-    if (part !== "all" && k !== part) return false;
+    if (part !== "all" && t !== part) return false;
     return true;
   });
   if (status==="learned")   list = list.filter(r=> learnedSet.has(r[K_WORT]));
@@ -242,9 +246,10 @@ function renderFlash(item) {
   setText("fc-grammar",  item[K_GRAMM] || "");
   setText("fc-sentence", item[K_SENT]  || "");
   const k = item[K_KAPI];
+  const t = item[K_TEIL];
   const b = document.getElementById("fc-badges");
   if (b) b.innerHTML = k
-    ? `<span class="m1-badge">Lektion ${k}</span><span class="m1-badge">Teil ${k}</span>`
+    ? `<span class="m1-badge">Lektion ${k}</span><span class="m1-badge">Teil ${t || 1}</span>`
     : "";
   const fb = document.getElementById("fav-btn");
   if (fb) fb.textContent = favSet.has(item[K_WORT]) ? "★" : "☆";
@@ -279,53 +284,80 @@ function doAudio() {
   if (!item) return;
 
   const isFlipped = document.getElementById("m1-card-inner")?.classList.contains("flipped");
-
-  // .opus dosyası varsa önce onu çal, hata olursa TTS'e düş
   const file = item[K_AUDIO] || item[K_AUDIO2] || "";
-  if (file) {
-    const a = document.getElementById("m1-audio");
-    a.src = file; a.currentTime = 0;
-    a.play().catch(() => ttsCard(item, isFlipped));
-  } else {
-    ttsCard(item, isFlipped);
-  }
-}
 
-// Kart durumuna göre okunacak metni belirle
-function ttsCard(item, isFlipped) {
   if (isFlipped) {
-    // Arka yüz: Beispielsatz
-    tts(item[K_SENT] || "");
+    // Arka yüz: sadece Beispielsatz — TTS ile oku (opus sadece kelime içeriyor)
+    ttsSpeak([item[K_SENT] || ""]);
   } else {
-    // Ön yüz: Wort + Grammatik + Beispielsatz sırayla
-    const parts = [
-      item[K_WORT]  || "",
-      item[K_GRAMM] || "",
-      item[K_SENT]  || ""
-    ].filter(Boolean);
-    ttsSequence(parts);
+    // Ön yüz: önce .opus ile kelimeyi çal, bitince gramer + cümleyi TTS ile oku
+    if (file) {
+      const a = document.getElementById("m1-audio");
+      a.src = file;
+      a.currentTime = 0;
+
+      // Önceki dinleyiciyi temizle
+      a.onended = null;
+
+      const afterOpus = () => {
+        const parts = [
+          item[K_GRAMM] || "",
+          item[K_SENT]  || ""
+        ].filter(Boolean);
+        ttsSpeak(parts);
+      };
+
+      a.play()
+        .then(() => { a.onended = afterOpus; })
+        .catch(() => {
+          // opus çalamazsa tümünü TTS ile oku
+          ttsSpeak([
+            item[K_WORT]  || "",
+            item[K_GRAMM] || "",
+            item[K_SENT]  || ""
+          ].filter(Boolean));
+        });
+    } else {
+      // opus yoksa tümünü TTS ile oku
+      ttsSpeak([
+        item[K_WORT]  || "",
+        item[K_GRAMM] || "",
+        item[K_SENT]  || ""
+      ].filter(Boolean));
+    }
   }
 }
 
-// Birden fazla cümleyi sırayla seslendirmek için kuyruk
-function ttsSequence(parts) {
+// Metinleri sırayla, doğal sesle seslendir
+function ttsSpeak(parts) {
   if (!parts.length || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
 
-  parts.forEach((text, i) => {
+  // Tarayıcı ses listesi hazır mı?
+  const voices = window.speechSynthesis.getVoices();
+  const deVoice = voices.find(v =>
+    v.lang.startsWith("de") && !v.name.toLowerCase().includes("google")
+  ) || voices.find(v => v.lang.startsWith("de")) || null;
+
+  let i = 0;
+  function speakNext() {
+    if (i >= parts.length) return;
+    const text = parts[i++];
+    if (!text.trim()) { speakNext(); return; }
+
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "de-DE";
-    u.rate = i === 0 ? 0.82 : 0.88; // kelimeyi biraz daha yavaş oku
+    u.lang  = "de-DE";
+    u.rate  = i === 1 ? 0.78 : 0.84;   // kelime yavaş, gramer/cümle biraz hızlı
+    u.pitch = 1.0;
+    if (deVoice) u.voice = deVoice;
+    u.onend = speakNext;
     window.speechSynthesis.speak(u);
-  });
+  }
+  speakNext();
 }
 
 function tts(text) {
-  if (!text || !window.speechSynthesis) return;
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "de-DE"; u.rate = 0.85;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
+  if (text) ttsSpeak([text]);
 }
 
 function doLearned() {
